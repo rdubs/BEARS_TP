@@ -23,6 +23,7 @@ class BasicSender(object):
 
     # Waits until packet is received to return.
     def receive(self, timeout=None):
+        print("in receive function")
         self.sock.settimeout(timeout)
         try:
             return self.sock.recv(4096)
@@ -37,7 +38,7 @@ class BasicSender(object):
 
     # Prepares a packet
     def make_packet(self,msg_type,seqno,msg):
-        body = "%s|%d|%s|" % (msg_type,seqno,msg)
+        body = "%s|%d|%s|" % (msg_type,seqno,msg)   
         checksum = Checksum.generate_checksum(body)
         packet = "%s%s" % (body,checksum)
         return packet

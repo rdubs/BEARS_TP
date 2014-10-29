@@ -15,7 +15,42 @@ class Sender(BasicSender.BasicSender):
 
     # Main sending loop.
     def start(self):
-        raise NotImplementedError
+        window = []
+        seqno = 0
+        msg = self.infile.read(1400)
+        msg_type = None
+        while not msg_type == 'end':
+            next_msg = self.infile.read(1400)
+            msg_type = 'data'
+            if seqno == 0:
+                msg_type = 'start'
+            elif next_msg == "":
+                msg_type = 'end'
+            
+            if len(window) < 5:
+                packet = self.make_packet(msg_type, seqno, msg)
+                self.send(packet)
+                window.append(packet)
+                msg = next_msg
+                seqno += 1
+                if msg_type != 'end': #
+                    continue
+            #handle ack
+            response = self.receive(.5)
+            #timeout
+            if not response: 
+                for packet in window:
+                    self.send(packet)
+                continue 
+            response = self.split_packet(response)
+            if not Checksum.validate_checksum(response):
+                continue
+            diff = response[1] - self.split_packet(window[0])[1]
+            if diff > 0: # decide if shift window
+                for x in range(0, diff):
+                    window.pop(0)
+                    
+        self.infile.close()
 
     def handle_timeout(self):
         pass
