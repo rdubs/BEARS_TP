@@ -11,14 +11,11 @@ class Sender(BasicSender.BasicSender):
     def __init__(self, dest, port, filename, debug=False, sackMode=False):
         super(Sender, self).__init__(dest, port, filename, debug)
         if sackMode:
-            pass
-            #raise NotImplementedError #remove this line when you implement SACK
+            raise NotImplementedError #remove this line when you implement SACK
 
     # Main sending loop.
     def start(self):
         window = []
-        ack_num = 0
-        sack_array = []
         ack_counts = {}
         seqno = 0
         msg = self.infile.read(1400)
@@ -48,26 +45,23 @@ class Sender(BasicSender.BasicSender):
                 response = self.receive(.5)
                 if response:
                     break
-                # otherwise, handle timeout
                 for packet in window:
-                    cur_num = self.split_packet(packet)[1]
-                    #base = int(self.split_packet(window[0])[1]) # 1st seq no in window
-                    if not sackMode or (not cur_num in sack_array and int(cur_num) >= ack_num):
+                    if not sackMode or (sack_array and not self.split_packet(packet)[1] in sack_array):
                         self.log("Timeout: sending " + packet[0:10])
                         self.send(packet)
-                sack_array = []
             self.log("sender getting response: " + response)
             if not Checksum.validate_checksum(response):
                 #FLAG potential bug here b/c continue could end the loop prematurely
                 continue
             response = self.split_packet(response)
+            ack_num = int(response[1])
             if sackMode:
                 sack_string = response[1].split(";") # "1;3,4".split(";") gives you ["1", "3,4"]
                 ack_num = int(sack_string[0]) # "1;3,4".split(";") gives you ["1", "3,4"]
                 sack_array = sack_string[1].split(",") # gives [3, 4]
-            else:
-                ack_num = int(response[1])
+
             # fast retransmit
+            base = int(self.split_packet(window[0])[1]) # 1st seq no in window
             if not ack_counts.has_key(ack_num):
                 ack_counts[ack_num] = 0
             else:
