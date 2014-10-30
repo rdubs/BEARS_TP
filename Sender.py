@@ -31,11 +31,13 @@ class Sender(BasicSender.BasicSender):
             #don't create more packets to send if last packet is already in the window
             if len(window) < 5 and not self.last_packet_in_window(window):
                 packet = self.make_packet(msg_type, seqno, msg)
-                print("Sending packet: " + packet[0:10])
+                self.log("Sending packet: " + packet[0:10])
                 self.send(packet)
                 window.append(packet)
                 msg = next_msg
                 seqno += 1
+                # do not continue if last packet has been put into window. msg_type will be "" and
+                # this will end the loop.
                 if msg_type != 'end':
                     continue
             #handle ack
@@ -44,12 +46,12 @@ class Sender(BasicSender.BasicSender):
                 if response:
                     break
                 for packet in window:
-                    print("Timeout: sending " + packet[0:10])
                     self.send(packet)
-            print("sender getting response: " + response + "\n\n\n")
+            self.log("sender getting response: " + response)
             if not Checksum.validate_checksum(response):
                 continue
             response = self.split_packet(response)
+            
             # fast retransmit
             base = int(self.split_packet(window[0])[1]) # 1st seq no in window
             if not ack_counts.has_key(response[1]):
@@ -60,12 +62,12 @@ class Sender(BasicSender.BasicSender):
                     self.send(window[0])
                     ack_counts.remove(response[1])
 
-
+            # remove packets from window if necessary
             diff = int(response[1]) - int(self.split_packet(window[0])[1])
             if diff > 0: # decide if shift window
                 for x in range(0, diff):
                     # window.pop(0)
-                    print("Removing: " + window.pop(0)[0:10] + "from window\n\n\n")
+                    self.log("Removing: " + window.pop(0)[0:10] + "from window\n\n\n")
             #if we have read everyting from the input file and there is still stuff 
             #in the window, update msg_type from 'end' to 'data' so loop doesn't end
             if msg_type == 'end' and window:
