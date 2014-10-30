@@ -23,7 +23,6 @@ class BasicSender(object):
 
     # Waits until packet is received to return.
     def receive(self, timeout=None):
-        print("in receive function")
         self.sock.settimeout(timeout)
         try:
             return self.sock.recv(4096)

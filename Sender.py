@@ -27,32 +27,45 @@ class Sender(BasicSender.BasicSender):
             elif next_msg == "":
                 msg_type = 'end'
             
-            if len(window) < 5:
+            #don't create more packets to send if last packet is already in the window
+            if len(window) < 5 and not self.last_packet_in_window(window):
                 packet = self.make_packet(msg_type, seqno, msg)
+                print("Sending packet: " + packet[0:10])
                 self.send(packet)
                 window.append(packet)
                 msg = next_msg
                 seqno += 1
-                if msg_type != 'end': #
+                if msg_type != 'end':
                     continue
             #handle ack
-            response = self.receive(.5)
-            #timeout
-            if not response: 
+            while(True):
+                response = self.receive(.5)
+                if response:
+                    break
                 for packet in window:
+                    print("Timeout: sending " + packet[0:10])
                     self.send(packet)
-                continue 
-            response = self.split_packet(response)
+            print("sender getting response: " + response + "\n\n\n")
             if not Checksum.validate_checksum(response):
                 continue
-            diff = response[1] - self.split_packet(window[0])[1]
+            response = self.split_packet(response)
+            diff = int(response[1]) - int(self.split_packet(window[0])[1])
             if diff > 0: # decide if shift window
                 for x in range(0, diff):
-                    window.pop(0)
-                    
+                    # window.pop(0)
+                    print("Removing: " + window.pop(0)[0:10] + "from window\n\n\n")
+            #if we have read everyting from the input file and there is still stuff 
+            #in the window, update msg_type from 'end' to 'data' so loop doesn't end
+            if msg_type == 'end' and window:
+                msg_type = 'data' 
         self.infile.close()
 
-    def handle_timeout(self):
+    def last_packet_in_window(self, window):
+        if window:
+            return self.split_packet(window[-1])[0] == 'end'
+        return False
+    
+    def handle_timeout(self, window):
         pass
 
     def handle_new_ack(self, ack):
