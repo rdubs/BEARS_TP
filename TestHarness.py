@@ -18,7 +18,7 @@ def tests_to_run(forwarder):
     from tests import BasicTest, RandomDropTest, SackRandomDropTest
     BasicTest.BasicTest(forwarder, "README")
     RandomDropTest.RandomDropTest(forwarder, "README")
-    #SackRandomDropTest.SackRandomDropTest(forwarder, "README")
+    SackRandomDropTest.SackRandomDropTest(forwarder, "README")
 """
 Testing is divided into two pieces: this forwarder and a set of test cases in
 the tests directory.
