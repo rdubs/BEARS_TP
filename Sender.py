@@ -16,6 +16,7 @@ class Sender(BasicSender.BasicSender):
     # Main sending loop.
     def start(self):
         window = []
+        ack_counts = {}
         seqno = 0
         msg = self.infile.read(1400)
         msg_type = None
@@ -49,6 +50,17 @@ class Sender(BasicSender.BasicSender):
             if not Checksum.validate_checksum(response):
                 continue
             response = self.split_packet(response)
+            # fast retransmit
+            base = int(self.split_packet(window[0])[1]) # 1st seq no in window
+            if not ack_counts.has_key(response[1]):
+                ack_counts[response[1]] = 0
+            else:
+                ack_counts[response[1]] += 1
+                if ack_counts[response[1]] == 3:
+                    self.send(window[0])
+                    ack_counts.remove(response[1])
+
+
             diff = int(response[1]) - int(self.split_packet(window[0])[1])
             if diff > 0: # decide if shift window
                 for x in range(0, diff):
