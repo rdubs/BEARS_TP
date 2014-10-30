@@ -10,8 +10,9 @@ This is a skeleton sender class. Create a fantastic transport protocol here.
 class Sender(BasicSender.BasicSender):
     def __init__(self, dest, port, filename, debug=False, sackMode=False):
         super(Sender, self).__init__(dest, port, filename, debug)
+        self.sackMode = False
         if sackMode:
-            pass
+            self.sackMode = sackMode
             #raise NotImplementedError #remove this line when you implement SACK
 
     # Main sending loop.
@@ -52,7 +53,7 @@ class Sender(BasicSender.BasicSender):
                 for packet in window:
                     cur_num = self.split_packet(packet)[1]
                     #base = int(self.split_packet(window[0])[1]) # 1st seq no in window
-                    if not sackMode or (not cur_num in sack_array and int(cur_num) >= ack_num):
+                    if not self.sackMode or len(sack_array) == 0 or (not cur_num in sack_array and int(cur_num) >= ack_num):
                         self.log("Timeout: sending " + packet[0:10])
                         self.send(packet)
                 sack_array = []
@@ -61,7 +62,7 @@ class Sender(BasicSender.BasicSender):
                 #FLAG potential bug here b/c continue could end the loop prematurely
                 continue
             response = self.split_packet(response)
-            if sackMode:
+            if self.sackMode:
                 sack_string = response[1].split(";") # "1;3,4".split(";") gives you ["1", "3,4"]
                 ack_num = int(sack_string[0]) # "1;3,4".split(";") gives you ["1", "3,4"]
                 sack_array = sack_string[1].split(",") # gives [3, 4]
