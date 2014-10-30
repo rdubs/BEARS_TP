@@ -51,6 +51,7 @@ class Sender(BasicSender.BasicSender):
                         self.send(packet)
             self.log("sender getting response: " + response)
             if not Checksum.validate_checksum(response):
+                #FLAG potential bug here b/c continue could end the loop prematurely
                 continue
             response = self.split_packet(response)
             ack_num = int(response[1])
@@ -67,7 +68,7 @@ class Sender(BasicSender.BasicSender):
                 ack_counts[ack_num] += 1
                 if ack_counts[ack_num] == 3:
                     self.send(window[0])
-                    ack_counts.remove(ack_num)
+                    del ack_counts[ack_num]
 
             # remove packets from window
             diff = ack_num - int(self.split_packet(window[0])[1])
