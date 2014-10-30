@@ -36,7 +36,7 @@ class Sender(BasicSender.BasicSender):
                 window.append(packet)
                 msg = next_msg
                 seqno += 1
-                # do not continue if last packet has been put into window. msg_type will be "" and
+                # do not CONTINUE if last packet has been put into window. msg_type will be 'end' and
                 # this will end the loop.
                 if msg_type != 'end':
                     continue
@@ -46,28 +46,36 @@ class Sender(BasicSender.BasicSender):
                 if response:
                     break
                 for packet in window:
-                    self.send(packet)
+                    if not sackMode or (sack_array and not self.split_packet(packet)[1] in sack_array):
+                        self.log("Timeout: sending " + packet[0:10])
+                        self.send(packet)
             self.log("sender getting response: " + response)
             if not Checksum.validate_checksum(response):
                 continue
             response = self.split_packet(response)
-            
+            ack_num = int(response[1])
+            if sackMode:
+                sack_string = response[1].split(";") # "1;3,4".split(";") gives you ["1", "3,4"]
+                ack_num = int(sack_string[0]) # "1;3,4".split(";") gives you ["1", "3,4"]
+                sack_array = sack_string[1].split(",") # gives [3, 4]
+
             # fast retransmit
             base = int(self.split_packet(window[0])[1]) # 1st seq no in window
-            if not ack_counts.has_key(response[1]):
-                ack_counts[response[1]] = 0
+            if not ack_counts.has_key(ack_num):
+                ack_counts[ack_num] = 0
             else:
-                ack_counts[response[1]] += 1
-                if ack_counts[response[1]] == 3:
+                ack_counts[ack_num] += 1
+                if ack_counts[ack_num] == 3:
                     self.send(window[0])
-                    ack_counts.remove(response[1])
+                    ack_counts.remove(ack_num)
 
-            # remove packets from window if necessary
-            diff = int(response[1]) - int(self.split_packet(window[0])[1])
+            # remove packets from window
+            diff = ack_num - int(self.split_packet(window[0])[1])
             if diff > 0: # decide if shift window
                 for x in range(0, diff):
-                    # window.pop(0)
-                    self.log("Removing: " + window.pop(0)[0:10] + "from window\n\n\n")
+                    window.pop(0)
+                    # self.log("Removing: " + window.pop(0)[0:10] + "from window\n\n\n")
+            
             #if we have read everyting from the input file and there is still stuff 
             #in the window, update msg_type from 'end' to 'data' so loop doesn't end
             if msg_type == 'end' and window:
