@@ -25,12 +25,14 @@ class Sender(BasicSender.BasicSender):
         msg = self.infile.read(1400)
         msg_type = None
         while not msg_type == 'end':
-            next_msg = self.infile.read(1400)
-            msg_type = 'data'
-            if seqno == 0:
-                msg_type = 'start'
-            elif next_msg == "":
-                msg_type = 'end'
+            #ONLY read from file if window is not full
+            if not len(window) == 5:
+                next_msg = self.infile.read(1400)
+                msg_type = 'data'
+                if seqno == 0:
+                    msg_type = 'start'
+                elif next_msg == "":
+                    msg_type = 'end'
             
             #don't create more packets to send if last packet is already in the window
             if len(window) < 5 and not self.last_packet_in_window(window):
