@@ -28,16 +28,15 @@ class Connection():
                     res_data.append(self.seqnums[n])
                     del self.seqnums[n]
                 else:
-                    if sackMode:
-                        sacks.append(n)
-                    else:
-                        break # when we find out of order seqno, quit and move on
+                    break # when we find out of order seqno, quit and move on
 
         if self.debug:
             print "Receiver.py:next seqno should be %d" % (self.current_seqno+1)
 
         # note: we return the /next/ sequence number we're expecting
         if sackMode:
+            for n in sorted(self.seqnums.keys()):
+                sacks.append(n)
             return "%s;%s" % (self.current_seqno+1, ','.join(map(str, sacks))), res_data
         else:
             return str(self.current_seqno+1), res_data

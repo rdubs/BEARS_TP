@@ -61,7 +61,8 @@ class Sender(BasicSender.BasicSender):
                 sack_array = []
             self.log("sender getting response: " + response)
             if not Checksum.validate_checksum(response):
-                #FLAG potential bug here b/c continue could end the loop prematurely
+                if msg_type == 'end' and window:
+                    msg_type = 'data' 
                 continue
             response = self.split_packet(response)
             if self.sackMode:

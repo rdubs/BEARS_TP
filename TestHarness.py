@@ -17,14 +17,14 @@ forwarder, so they will magically be run.
 def tests_to_run(forwarder):
     from tests import BasicTest, RandomDropTest, SackRandomDropTest
     BasicTest.BasicTest(forwarder, "README")
-    RandomDropTest.RandomDropTest(forwarder, "README")
-    SackRandomDropTest.SackRandomDropTest(forwarder, "README")
-    BasicTest.BasicTest(forwarder, "MediumFile.txt")
-    RandomDropTest.RandomDropTest(forwarder, "MediumFile.txt")
-    SackRandomDropTest.SackRandomDropTest(forwarder, "MediumFile.txt")
-    BasicTest.BasicTest(forwarder, "LargeFile.txt")
-    RandomDropTest.RandomDropTest(forwarder, "LargeFile.txt")
-    SackRandomDropTest.SackRandomDropTest(forwarder, "LargeFile.txt")
+    # RandomDropTest.RandomDropTest(forwarder, "README")
+    # SackRandomDropTest.SackRandomDropTest(forwarder, "README")
+    # BasicTest.BasicTest(forwarder, "MediumFile.txt")
+    # RandomDropTest.RandomDropTest(forwarder, "MediumFile.txt")
+    # SackRandomDropTest.SackRandomDropTest(forwarder, "MediumFile.txt")
+    # BasicTest.BasicTest(forwarder, "LargeFile.txt")
+    # RandomDropTest.RandomDropTest(forwarder, "LargeFile.txt")
+    # SackRandomDropTest.SackRandomDropTest(forwarder, "LargeFile.txt")
 
 """
 Testing is divided into two pieces: this forwarder and a set of test cases in
